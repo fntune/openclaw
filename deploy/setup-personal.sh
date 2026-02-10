@@ -122,7 +122,7 @@ section_clone_or_pull() {
 section_build() {
   info "Installing dependencies..."
   cd "$INSTALL_DIR"
-  pnpm install --frozen-lockfile
+  pnpm install
 
   info "Building..."
   pnpm build
