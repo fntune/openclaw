@@ -3,189 +3,218 @@
 // Deployed via deploy-admin.sh to openclaw-sourabh VM.
 {
   // --- Model provider ---
-  "models": {
-    "providers": {
-      "google": {
-        "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
-        "apiKey": "${GOOGLE_API_KEY}",
-        "api": "google-generative-ai",
-        "models": [
+  models: {
+    providers: {
+      google: {
+        baseUrl: "https://generativelanguage.googleapis.com/v1beta",
+        apiKey: "${GOOGLE_API_KEY}",
+        api: "google-generative-ai",
+        models: [
           {
-            "id": "gemini-3-flash-preview",
-            "name": "Gemini 3 Flash Preview",
-            "api": "google-generative-ai",
-            "reasoning": false,
-            "input": ["text", "image"],
-            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
-            "contextWindow": 1048576,
-            "maxTokens": 65536
-          }
-        ]
-      }
-    }
+            id: "gemini-3-flash-preview",
+            name: "Gemini 3 Flash Preview",
+            api: "google-generative-ai",
+            reasoning: false,
+            input: ["text", "image"],
+            cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+            contextWindow: 1048576,
+            maxTokens: 65536,
+          },
+        ],
+      },
+    },
   },
 
   // --- Agents ---
-  "agents": {
-    "defaults": {
-      "model": {
-        "primary": "${MODEL_PRIMARY}"
-      }
+  agents: {
+    defaults: {
+      model: {
+        primary: "${MODEL_PRIMARY}",
+      },
     },
 
-    "list": [
+    list: [
       // Admin agent — Sourabh (WhatsApp, fully unrestricted)
       {
-        "id": "sourabh",
-        "default": true,
-        "workspace": "/home/node/.openclaw/workspace/sourabh",
-        "identity": {
-          "name": "Sourabh",
-          "emoji": "⚡",
-          "theme": "green"
+        id: "sourabh",
+        default: true,
+        workspace: "${OPENCLAW_STATE_DIR}/workspace/sourabh",
+        identity: {
+          name: "Sourabh",
+          emoji: "⚡",
+          theme: "green",
         },
-        "subagents": { "allowAgents": ["analyst", "jira"] },
-        "tools": {
-          "allow": [
-            "work_order_list", "work_order_create", "work_order_update",
-            "vendor_list", "vendor_availability",
-            "schedule_vendor", "reschedule_vendor",
+        subagents: { allowAgents: ["analyst", "jira"] },
+        tools: {
+          allow: [
+            "work_order_list",
+            "work_order_create",
+            "work_order_update",
+            "vendor_list",
+            "vendor_availability",
+            "schedule_vendor",
+            "reschedule_vendor",
             "ask_data_analyst",
-            "customer_get", "customer_list",
-            "property_list", "property_get",
+            "customer_get",
+            "customer_list",
+            "property_list",
+            "property_get",
             "reservation_list",
-            "contact_list", "contact_get",
-            "experiment_configs", "experiment_config",
-            "metrics_latest", "metrics_history",
+            "contact_list",
+            "contact_get",
+            "experiment_configs",
+            "experiment_config",
+            "metrics_latest",
+            "metrics_history",
             "entity_query",
-            "jira_search", "jira_get_issue", "jira_create_issue",
-            "jira_update_issue", "jira_transition_issue", "jira_get_transitions",
+            "jira_search",
+            "jira_get_issue",
+            "jira_create_issue",
+            "jira_update_issue",
+            "jira_transition_issue",
+            "jira_get_transitions",
             "jira_add_comment",
-            "confluence_search", "confluence_get_page",
-            "confluence_get_comments", "confluence_add_comment",
-            "exec", "bash", "read", "write", "edit", "apply_patch"
-          ]
-        }
+            "confluence_search",
+            "confluence_get_page",
+            "confluence_get_comments",
+            "confluence_add_comment",
+            "exec",
+            "bash",
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+          ],
+        },
       },
 
       // Subagent-only: Data analyst (spawned by sourabh for BigQuery queries)
       {
-        "id": "analyst",
-        "workspace": "/home/node/.openclaw/workspace/analyst",
-        "identity": { "name": "Data Analyst", "emoji": "📊", "theme": "purple" },
-        "tools": {
-          "allow": ["ask_data_analyst"],
-          "deny": ["exec", "bash", "read", "write", "edit", "apply_patch"]
-        }
+        id: "analyst",
+        workspace: "${OPENCLAW_STATE_DIR}/workspace/analyst",
+        identity: { name: "Data Analyst", emoji: "📊", theme: "purple" },
+        tools: {
+          allow: ["ask_data_analyst"],
+          deny: ["exec", "bash", "read", "write", "edit", "apply_patch"],
+        },
       },
 
       // Subagent-only: Jira/Confluence researcher (spawned by sourabh for Atlassian research)
       {
-        "id": "jira",
-        "workspace": "/home/node/.openclaw/workspace/jira",
-        "identity": { "name": "Jira Researcher", "emoji": "🔍", "theme": "orange" },
-        "tools": {
-          "allow": [
-            "jira_search", "jira_get_issue", "jira_create_issue",
-            "jira_update_issue", "jira_transition_issue", "jira_get_transitions",
+        id: "jira",
+        workspace: "${OPENCLAW_STATE_DIR}/workspace/jira",
+        identity: { name: "Jira Researcher", emoji: "🔍", theme: "orange" },
+        tools: {
+          allow: [
+            "jira_search",
+            "jira_get_issue",
+            "jira_create_issue",
+            "jira_update_issue",
+            "jira_transition_issue",
+            "jira_get_transitions",
             "jira_add_comment",
-            "confluence_search", "confluence_get_page",
-            "confluence_get_comments", "confluence_add_comment"
+            "confluence_search",
+            "confluence_get_page",
+            "confluence_get_comments",
+            "confluence_add_comment",
           ],
-          "deny": ["exec", "bash", "read", "write", "edit", "apply_patch"]
-        }
-      }
-    ]
+          deny: ["exec", "bash", "read", "write", "edit", "apply_patch"],
+        },
+      },
+    ],
   },
 
   // --- Channel routing ---
-  "bindings": [
-    { "agentId": "sourabh", "match": { "channel": "whatsapp", "peer": { "kind": "dm", "id": "+918130709950" } } }
+  bindings: [
+    {
+      agentId: "sourabh",
+      match: { channel: "whatsapp", peer: { kind: "dm", id: "+918130709950" } },
+    },
   ],
 
   // --- Channels (WhatsApp only) ---
-  "channels": {
-    "whatsapp": {
-      "dmPolicy": "allowlist",
-      "allowFrom": ["+918130709950"],
-      "groupPolicy": "disabled",
-      "blockStreaming": true,
-      "sendReadReceipts": true,
-      "accounts": {
-        "default": {
-          "enabled": true
-        }
-      }
-    }
+  channels: {
+    whatsapp: {
+      dmPolicy: "allowlist",
+      allowFrom: ["+918130709950"],
+      groupPolicy: "disabled",
+      blockStreaming: true,
+      sendReadReceipts: true,
+      accounts: {
+        default: {
+          enabled: true,
+        },
+      },
+    },
   },
 
   // --- Messages ---
-  "messages": {
-    "queue": {
-      "mode": "collect",
-      "debounceMs": 1500,
-      "cap": 20,
-      "drop": "summarize"
-    }
+  messages: {
+    queue: {
+      mode: "collect",
+      debounceMs: 1500,
+      cap: 20,
+      drop: "summarize",
+    },
   },
 
   // --- Gateway ---
-  "gateway": {
-    "mode": "local",
-    "auth": {
-      "mode": "token",
-      "token": "${OPENCLAW_GATEWAY_TOKEN}"
+  gateway: {
+    mode: "local",
+    auth: {
+      mode: "token",
+      token: "${OPENCLAW_GATEWAY_TOKEN}",
     },
-    "controlUi": {
-      "allowInsecureAuth": true
+    controlUi: {
+      allowInsecureAuth: true,
     },
-    "http": {
-      "endpoints": {
-        "chatCompletions": {
-          "enabled": true
-        }
-      }
-    }
+    http: {
+      endpoints: {
+        chatCompletions: {
+          enabled: true,
+        },
+      },
+    },
   },
 
   // --- Plugins ---
-  "plugins": {
-    "entries": {
+  plugins: {
+    entries: {
       "vrm-operator": {
-        "enabled": true,
-        "config": {
-          "adminApiUrl": "${VRM_ADMIN_API_URL}",
-          "adminApiKey": "${VRM_ADMIN_API_KEY}",
-          "jarvisUrl": "${JARVIS_URL}",
-          "jarvisApiKey": "${JARVIS_API_KEY}",
-          "tenants": {
-            "sourabh": "*",
-            "analyst": "*",
-            "jira": "*"
-          }
-        }
+        enabled: true,
+        config: {
+          adminApiUrl: "${VRM_ADMIN_API_URL}",
+          adminApiKey: "${VRM_ADMIN_API_KEY}",
+          jarvisUrl: "${JARVIS_URL}",
+          jarvisApiKey: "${JARVIS_API_KEY}",
+          tenants: {
+            sourabh: "*",
+            analyst: "*",
+            jira: "*",
+          },
+        },
       },
       "mcp-bridge": {
-        "enabled": true,
-        "config": {
-          "servers": {
-            "atlassian": {
-              "url": "${MCP_ATLASSIAN_URL}"
+        enabled: true,
+        config: {
+          servers: {
+            atlassian: {
+              url: "${MCP_ATLASSIAN_URL}",
             },
-            "miner": {
-              "url": "${MCP_MINER_URL}",
-              "transport": "http",
-              "timeout": 30000,
-              "headers": {
-                "X-API-Key": "${MCP_MINER_API_KEY}"
-              }
-            }
-          }
-        }
+            miner: {
+              url: "${MCP_MINER_URL}",
+              transport: "http",
+              timeout: 30000,
+              headers: {
+                "X-API-Key": "${MCP_MINER_API_KEY}",
+              },
+            },
+          },
+        },
       },
-      "whatsapp": {
-        "enabled": true
-      }
-    }
-  }
+      whatsapp: {
+        enabled: true,
+      },
+    },
+  },
 }
