@@ -1,0 +1,217 @@
+// VRM Operator — OpenClaw configuration template
+// Copy to ~/.openclaw/openclaw.json on the gateway VM, replacing ${...} placeholders.
+// System instructions go in AGENTS.md files in each workspace directory.
+{
+  // --- Model provider ---
+  "models": {
+    "providers": {
+      "google": {
+        "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
+        "apiKey": "${GOOGLE_API_KEY}",
+        "api": "google-generative-ai",
+        "models": [
+          {
+            "id": "gemini-3-flash-preview",
+            "name": "Gemini 3 Flash Preview",
+            "api": "google-generative-ai",
+            "reasoning": false,
+            "input": ["text", "image"],
+            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+            "contextWindow": 1048576,
+            "maxTokens": 65536
+          }
+        ]
+      }
+    }
+  },
+
+  // --- Agents ---
+  // NOTE: tools go on each agent (not in defaults). identity only supports name/theme/emoji/avatar.
+  // System instructions go in AGENTS.md in the workspace directory.
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "${MODEL_PRIMARY}"
+      }
+    },
+
+    "list": [
+      // Internal ops agent — Aidaptive team, all CIDs
+      {
+        "id": "ops",
+        "default": true,
+        "workspace": "/home/node/.openclaw/workspace/ops",
+        "identity": {
+          "name": "Aidaptive Operator",
+          "emoji": "🔮",
+          "theme": "blue"
+        },
+        "subagents": { "allowAgents": ["analyst"] },
+        "tools": {
+          "allow": [
+            "work_order_list", "work_order_create", "work_order_update",
+            "vendor_list", "vendor_availability",
+            "schedule_vendor", "reschedule_vendor",
+            "ask_data_analyst",
+            "customer_get", "customer_list",
+            "property_list", "property_get",
+            "reservation_list",
+            "contact_list", "contact_get",
+            "experiment_configs", "experiment_config",
+            "metrics_latest", "metrics_history",
+            "entity_query"
+          ],
+          "deny": ["exec", "bash", "read", "write", "edit", "apply_patch"]
+        }
+      },
+
+      // Per-CID agent — Twiddy (first client)
+      {
+        "id": "twiddy",
+        "workspace": "/home/node/.openclaw/workspace/twiddy",
+        "identity": {
+          "name": "Aidaptive Operator for Twiddy",
+          "emoji": "🔮",
+          "theme": "teal"
+        },
+        "subagents": { "allowAgents": ["analyst"] },
+        "tools": {
+          "allow": [
+            "work_order_list", "work_order_create", "work_order_update",
+            "vendor_list", "vendor_availability",
+            "schedule_vendor", "reschedule_vendor",
+            "ask_data_analyst",
+            "customer_get", "customer_list",
+            "property_list", "property_get",
+            "reservation_list",
+            "contact_list", "contact_get",
+            "experiment_configs", "experiment_config",
+            "metrics_latest", "metrics_history",
+            "entity_query"
+          ],
+          "deny": ["exec", "bash", "read", "write", "edit", "apply_patch"]
+        }
+      },
+
+      // Subagent-only: Data analyst (spawned by ops / twiddy for BigQuery queries)
+      {
+        "id": "analyst",
+        "workspace": "/home/node/.openclaw/workspace/analyst",
+        "identity": { "name": "Data Analyst", "emoji": "📊", "theme": "purple" },
+        "tools": {
+          "allow": ["ask_data_analyst"],
+          "deny": ["exec", "bash", "read", "write", "edit", "apply_patch"]
+        }
+      }
+
+      // To onboard a new client:
+      // 1. Add an agent block here with unique id (e.g. "<cid>")
+      // 2. Add a binding below to route their Slack channel
+      // 3. Add tenant entry to plugins.entries.vrm-operator.config.tenants
+      // 4. Create AGENTS.md in their workspace directory
+      // 5. Create the Slack channel and invite the bot
+      // 6. Restart the gateway
+    ]
+  },
+
+  // --- Channel routing ---
+  // Uses peer.kind + peer.id (not "group")
+  "bindings": [
+    { "agentId": "ops",    "match": { "channel": "slack", "peer": { "kind": "channel", "id": "operator" } } },
+    { "agentId": "twiddy", "match": { "channel": "slack", "peer": { "kind": "channel", "id": "operator-twiddy" } } }
+  ],
+
+  // --- Channels ---
+  "channels": {
+    "slack": {
+      "enabled": true,
+      "mode": "socket",
+      "botToken": "${SLACK_BOT_TOKEN}",
+      "appToken": "${SLACK_APP_TOKEN}",
+      "requireMention": true,
+      "reactionNotifications": "own",
+      "replyToMode": "all",
+      "blockStreaming": true,
+      "allowBots": true,
+      "thread": {
+        "historyScope": "thread"
+      },
+      "groupPolicy": "open",
+      "dm": {
+        "enabled": true,
+        "policy": "open",
+        "allowFrom": ["*"]
+      }
+    }
+  },
+
+  // --- Messages ---
+  "messages": {
+    "ackReaction": "eyes",
+    "ackReactionScope": "all",
+    "removeAckAfterReply": true,
+    "queue": {
+      "mode": "collect",
+      "debounceMs": 1500,
+      "cap": 20,
+      "drop": "summarize"
+    }
+  },
+
+  // --- Gateway ---
+  "gateway": {
+    "mode": "local",
+    "auth": {
+      "mode": "token",
+      "token": "${OPENCLAW_GATEWAY_TOKEN}"
+    },
+    "controlUi": {
+      "allowInsecureAuth": true
+    },
+    "http": {
+      "endpoints": {
+        "chatCompletions": {
+          "enabled": true
+        }
+      }
+    }
+  },
+
+  // --- Plugins ---
+  "plugins": {
+    "entries": {
+      "vrm-operator": {
+        "enabled": true,
+        "config": {
+          "adminApiUrl": "${VRM_ADMIN_API_URL}",
+          "adminApiKey": "${VRM_ADMIN_API_KEY}",
+          "jarvisUrl": "${JARVIS_URL}",
+          "jarvisApiKey": "${JARVIS_API_KEY}",
+          "tenants": {
+            "ops": "*",
+            "twiddy": ["twiddy"],
+            "analyst": "*"
+          }
+        }
+      },
+      "mcp-bridge": {
+        "enabled": true,
+        "config": {
+          "servers": {
+            "miner": {
+              "url": "${MCP_MINER_URL}",
+              "transport": "http",
+              "timeout": 30000,
+              "headers": {
+                "X-API-Key": "${MCP_MINER_API_KEY}"
+              }
+            }
+          }
+        }
+      },
+      "slack": {
+        "enabled": true
+      }
+    }
+  }
+}

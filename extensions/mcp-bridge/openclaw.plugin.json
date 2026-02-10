@@ -1,0 +1,49 @@
+{
+  "id": "mcp-bridge",
+  "name": "MCP Bridge",
+  "description": "Bridge tools from external MCP servers into OpenClaw. Auto-discovers tools via listTools().",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "servers": {
+        "type": "object",
+        "description": "MCP servers to bridge. Keys are server names (e.g. 'atlassian', 'github').",
+        "additionalProperties": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "url": {
+              "type": "string",
+              "description": "Endpoint URL for the MCP server."
+            },
+            "enabled": {
+              "type": "boolean",
+              "description": "Set false to disable this server. Defaults to true."
+            },
+            "timeout": {
+              "type": "number",
+              "description": "Discovery timeout in milliseconds. Defaults to 10000."
+            },
+            "prefix": {
+              "type": "string",
+              "description": "Optional prefix for tool names to avoid collisions across servers."
+            },
+            "transport": {
+              "type": "string",
+              "enum": ["sse", "http"],
+              "description": "MCP transport type. 'sse' for legacy SSE, 'http' for Streamable HTTP. Defaults to 'sse'."
+            },
+            "headers": {
+              "type": "object",
+              "description": "Custom HTTP headers (e.g. API keys) sent with every request.",
+              "additionalProperties": { "type": "string" }
+            }
+          },
+          "required": ["url"]
+        }
+      }
+    },
+    "required": ["servers"]
+  }
+}

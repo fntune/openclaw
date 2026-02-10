@@ -1,0 +1,17 @@
+[Unit]
+Description=OpenClaw Admin Agent Gateway (sourabh)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/openclaw
+ExecStartPre=/opt/openclaw/deploy/fetch-secrets-admin.sh jarvis-ml-dev
+ExecStartPre=/opt/openclaw/deploy/generate-config-admin.sh
+ExecStart=/usr/bin/docker compose -f docker-compose.prod.yml up -d --remove-orphans
+ExecStop=/usr/bin/docker compose -f docker-compose.prod.yml down
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target

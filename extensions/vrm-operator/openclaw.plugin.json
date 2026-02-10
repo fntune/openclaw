@@ -1,0 +1,46 @@
+{
+  "id": "vrm-operator",
+  "name": "VRM Operator",
+  "description": "Work order management, vendor scheduling, and data queries for vacation rental property managers.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "adminApiUrl": {
+        "type": "string",
+        "description": "Base URL for the VRM admin API."
+      },
+      "adminApiKey": {
+        "type": "string",
+        "description": "API key for authenticating with the admin API."
+      },
+      "jarvisUrl": {
+        "type": "string",
+        "description": "Base URL for the Jarvis data agent (BigQuery)."
+      },
+      "jarvisApiKey": {
+        "type": "string",
+        "description": "API key for authenticating with Jarvis."
+      },
+      "mcpServerUrl": {
+        "type": "string",
+        "description": "Base URL for the MCP server REST API."
+      },
+      "mcpServerApiKey": {
+        "type": "string",
+        "description": "API key for authenticating with the MCP server."
+      },
+      "tenants": {
+        "type": "object",
+        "description": "Agent-to-CID access policy. Keys are agent IDs. Values: array of allowed CIDs or \"*\" for unrestricted.",
+        "additionalProperties": {
+          "oneOf": [
+            { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+            { "type": "string", "const": "*" }
+          ]
+        }
+      }
+    },
+    "required": ["adminApiUrl", "adminApiKey"]
+  }
+}

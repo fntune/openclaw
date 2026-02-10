@@ -1,0 +1,19 @@
+{
+  "name": "vrm-mock-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mock VRM admin API for development",
+  "type": "module",
+  "scripts": {
+    "start": "tsx index.ts",
+    "dev": "tsx watch index.ts"
+  },
+  "dependencies": {
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0"
+  }
+}

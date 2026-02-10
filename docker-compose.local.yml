@@ -1,0 +1,13 @@
+# Local override for docker-compose.prod.yml — remaps volumes and adds build context.
+# Usage: docker compose -f docker-compose.prod.yml -f docker-compose.local.yml up --build
+services:
+  openclaw-gateway:
+    build: .
+    volumes:
+      - ./.local:/home/node/.openclaw
+      - ./.local/workspace:/home/node/.openclaw/workspace
+      - ./.local/logs:/tmp/openclaw
+  mock-api:
+    build: ./mock-api
+  mcp-atlassian:
+    env_file: .env

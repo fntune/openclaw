@@ -1,0 +1,14 @@
+{
+  "name": "@openclaw/vrm-operator",
+  "version": "0.1.0",
+  "description": "VRM Operator plugin — work order management and vendor scheduling",
+  "type": "module",
+  "devDependencies": {
+    "openclaw": "workspace:*"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

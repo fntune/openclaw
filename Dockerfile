@@ -18,6 +18,8 @@ RUN if [ -n "$OPENCLAW_DOCKER_APT_PACKAGES" ]; then \
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY ui/package.json ./ui/package.json
+COPY extensions/vrm-operator/package.json ./extensions/vrm-operator/package.json
+COPY extensions/mcp-bridge/package.json ./extensions/mcp-bridge/package.json
 COPY patches ./patches
 COPY scripts ./scripts
 

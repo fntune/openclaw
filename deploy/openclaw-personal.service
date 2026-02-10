@@ -1,0 +1,20 @@
+[Unit]
+Description=OpenClaw Personal Gateway
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/openclaw
+Environment=HOME=/home/ubuntu
+Environment=NODE_ENV=production
+Environment=OPENCLAW_STATE_DIR=/home/ubuntu/.openclaw
+EnvironmentFile=/opt/openclaw/.env
+ExecStart=/usr/bin/node dist/index.js gateway --bind lan --port 18789
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,73 @@
+services:
+  openclaw-gateway:
+    image: gcr.io/${GCP_PROJECT_ID:-jarvis-ml-dev}/openclaw-gateway:${IMAGE_TAG:-latest}
+    env_file: .env
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      VRM_ADMIN_API_KEY: ${VRM_ADMIN_API_KEY}
+      VRM_ADMIN_API_URL: ${VRM_ADMIN_API_URL:-http://mock-api:3001}
+      JARVIS_URL: ${JARVIS_URL}
+      JARVIS_API_KEY: ${JARVIS_API_KEY}
+      MCP_ATLASSIAN_URL: ${MCP_ATLASSIAN_URL:-http://mcp-atlassian:8081/sse}
+      MCP_MINER_URL: ${MCP_MINER_URL:-https://miner-dot-jarvis-ml-dev.uc.r.appspot.com/mcp/}
+      MCP_MINER_API_KEY: ${MCP_MINER_API_KEY}
+    volumes:
+      - /mnt/openclaw-data/.openclaw:/home/node/.openclaw
+      - /mnt/openclaw-data/logs:/tmp/openclaw
+    ports:
+      - "18789:18789"
+      - "18790:18790"
+    init: true
+    restart: unless-stopped
+    depends_on:
+      mcp-atlassian:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:18789/health').then(r=>{process.exit(r.status<500?0:(r.status===503?0:1))}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+    command:
+      [
+        "node",
+        "dist/index.js",
+        "gateway",
+        "--bind",
+        "lan",
+        "--port",
+        "18789",
+      ]
+
+  mcp-atlassian:
+    image: ghcr.io/sooperset/mcp-atlassian:latest
+    environment:
+      JIRA_URL: ${JIRA_URL}
+      JIRA_USERNAME: ${JIRA_USERNAME}
+      JIRA_API_TOKEN: ${JIRA_API_TOKEN}
+      CONFLUENCE_URL: ${CONFLUENCE_URL}
+      CONFLUENCE_USERNAME: ${CONFLUENCE_USERNAME}
+      CONFLUENCE_API_TOKEN: ${CONFLUENCE_API_TOKEN}
+    command: ["--transport", "sse", "--port", "8081"]
+    expose:
+      - "8081"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.create_connection(('localhost',8081),3); s.close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
