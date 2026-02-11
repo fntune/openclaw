@@ -31,6 +31,8 @@
       model: {
         primary: "${MODEL_PRIMARY}",
       },
+      thinkingDefault: "high",
+      verboseDefault: "full",
     },
 
     list: [
@@ -41,71 +43,38 @@
         workspace: "${OPENCLAW_STATE_DIR}/workspace/sourabh",
         identity: {
           name: "Sourabh",
-          emoji: "⚡",
+          emoji: "👾",
           theme: "green",
         },
-        subagents: { allowAgents: ["analyst", "jira"] },
+        subagents: { allowAgents: ["aidaptive"] },
+        tools: {
+          allow: ["exec", "bash", "read", "write", "edit"],
+        },
+      },
+
+      // Friend agent — chat only, no tools, no shell access
+      {
+        id: "friend",
+        workspace: "${OPENCLAW_STATE_DIR}/workspace/friend",
+        identity: {
+          name: "Clawd",
+          emoji: "👾",
+          theme: "blue",
+        },
+        tools: {
+          allow: [],
+          deny: ["exec", "bash", "read", "write", "edit"],
+        },
+      },
+
+      // Subagent-only: Aidaptive work agent (BigQuery + Jira + Confluence)
+      {
+        id: "aidaptive",
+        workspace: "${OPENCLAW_STATE_DIR}/workspace/aidaptive",
+        identity: { name: "Aidaptive", emoji: "🔧", theme: "purple" },
         tools: {
           allow: [
-            "work_order_list",
-            "work_order_create",
-            "work_order_update",
-            "vendor_list",
-            "vendor_availability",
-            "schedule_vendor",
-            "reschedule_vendor",
             "ask_data_analyst",
-            "customer_get",
-            "customer_list",
-            "property_list",
-            "property_get",
-            "reservation_list",
-            "contact_list",
-            "contact_get",
-            "experiment_configs",
-            "experiment_config",
-            "metrics_latest",
-            "metrics_history",
-            "entity_query",
-            "jira_search",
-            "jira_get_issue",
-            "jira_create_issue",
-            "jira_update_issue",
-            "jira_transition_issue",
-            "jira_get_transitions",
-            "jira_add_comment",
-            "confluence_search",
-            "confluence_get_page",
-            "confluence_get_comments",
-            "confluence_add_comment",
-            "exec",
-            "bash",
-            "read",
-            "write",
-            "edit",
-            "apply_patch",
-          ],
-        },
-      },
-
-      // Subagent-only: Data analyst (spawned by sourabh for BigQuery queries)
-      {
-        id: "analyst",
-        workspace: "${OPENCLAW_STATE_DIR}/workspace/analyst",
-        identity: { name: "Data Analyst", emoji: "📊", theme: "purple" },
-        tools: {
-          allow: ["ask_data_analyst"],
-          deny: ["exec", "bash", "read", "write", "edit", "apply_patch"],
-        },
-      },
-
-      // Subagent-only: Jira/Confluence researcher (spawned by sourabh for Atlassian research)
-      {
-        id: "jira",
-        workspace: "${OPENCLAW_STATE_DIR}/workspace/jira",
-        identity: { name: "Jira Researcher", emoji: "🔍", theme: "orange" },
-        tools: {
-          allow: [
             "jira_search",
             "jira_get_issue",
             "jira_create_issue",
@@ -118,7 +87,7 @@
             "confluence_get_comments",
             "confluence_add_comment",
           ],
-          deny: ["exec", "bash", "read", "write", "edit", "apply_patch"],
+          deny: ["exec", "bash", "read", "write", "edit"],
         },
       },
     ],
@@ -130,14 +99,22 @@
       agentId: "sourabh",
       match: { channel: "whatsapp", peer: { kind: "dm", id: "+918130709950" } },
     },
+    {
+      agentId: "friend",
+      match: { channel: "whatsapp", peer: { kind: "dm", id: "+919527146868" } },
+    },
+    {
+      agentId: "friend",
+      match: { channel: "whatsapp", peer: { kind: "dm", id: "+919810824347" } },
+    },
   ],
 
   // --- Channels (WhatsApp only) ---
   channels: {
     whatsapp: {
       dmPolicy: "allowlist",
-      allowFrom: ["+918130709950"],
-      groupPolicy: "disabled",
+      allowFrom: ["+918130709950", "+919527146868", "+919810824347"],
+      groupPolicy: "open",
       blockStreaming: true,
       sendReadReceipts: true,
       accounts: {
@@ -151,11 +128,19 @@
   // --- Messages ---
   messages: {
     queue: {
-      mode: "collect",
+      mode: "steer-backlog",
       debounceMs: 1500,
       cap: 20,
       drop: "summarize",
     },
+  },
+
+  // --- Browser (headless Chrome for agent web automation) ---
+  browser: {
+    enabled: true,
+    headless: true,
+    noSandbox: true,
+    defaultProfile: "remote",
   },
 
   // --- Gateway ---
@@ -188,9 +173,7 @@
           jarvisUrl: "${JARVIS_URL}",
           jarvisApiKey: "${JARVIS_API_KEY}",
           tenants: {
-            sourabh: "*",
-            analyst: "*",
-            jira: "*",
+            aidaptive: "*",
           },
         },
       },
@@ -200,14 +183,6 @@
           servers: {
             atlassian: {
               url: "${MCP_ATLASSIAN_URL}",
-            },
-            miner: {
-              url: "${MCP_MINER_URL}",
-              transport: "http",
-              timeout: 30000,
-              headers: {
-                "X-API-Key": "${MCP_MINER_API_KEY}",
-              },
             },
           },
         },
