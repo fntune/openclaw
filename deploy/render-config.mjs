@@ -1,7 +1,11 @@
 #!/usr/bin/env node
-// Strip JSON5 comments and expand ${VAR} placeholders from environment.
+// Parse JSON5 template, expand ${VAR} placeholders, emit valid JSON.
 // Usage: node deploy/render-config.mjs <template.json5> <output.json>
 import { readFileSync, writeFileSync } from "fs";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
+const JSON5 = require("json5");
 
 const [templatePath, outputPath] = process.argv.slice(2);
 if (!templatePath || !outputPath) {
@@ -11,14 +15,13 @@ if (!templatePath || !outputPath) {
 
 const template = readFileSync(templatePath, "utf8");
 
-// Strip single-line // comments (but not inside strings)
-const stripped = template.replace(/^\s*\/\/.*$/gm, "");
-
-// Expand ${VAR} placeholders
+// Expand ${VAR} placeholders before parsing (so values land in strings)
 const missing = [];
-const expanded = stripped.replace(/\$\{(\w+)\}/g, (_, key) => {
+const expanded = template.replace(/\$\{(\w+)\}/g, (_, key) => {
   const val = process.env[key];
-  if (!val) missing.push(key);
+  if (!val) {
+    missing.push(key);
+  }
   return val ?? "";
 });
 
@@ -27,13 +30,14 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
-// Validate the result is valid JSON
+// Parse as JSON5 (handles comments, unquoted keys, trailing commas)
+let config;
 try {
-  JSON.parse(expanded);
+  config = JSON5.parse(expanded);
 } catch (err) {
-  console.error(`Output is not valid JSON: ${err.message}`);
+  console.error(`Failed to parse template: ${err.message}`);
   process.exit(1);
 }
 
-writeFileSync(outputPath, expanded);
+writeFileSync(outputPath, JSON.stringify(config, null, 2));
 console.log(`Rendered ${templatePath} → ${outputPath}`);
